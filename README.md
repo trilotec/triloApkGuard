@@ -9,7 +9,6 @@ See also:
 - [DISCLAIMER.md](f:/projects/triloDexPack/DISCLAIMER.md)
 - [CONTRIBUTING.md](f:/projects/triloDexPack/CONTRIBUTING.md)
 - [SECURITY.md](f:/projects/triloDexPack/SECURITY.md)
-- [docs/OPEN_SOURCE_RELEASE_CHECKLIST.md](f:/projects/triloDexPack/docs/OPEN_SOURCE_RELEASE_CHECKLIST.md)
 
 ## What It Does
 
@@ -70,7 +69,6 @@ The community edition should remain usable on its own. Commercial work should ex
 - [stub](f:/projects/triloDexPack/stub): injected smali runtime stub
 - [native](f:/projects/triloDexPack/native): native code generation inputs
 - [tests](f:/projects/triloDexPack/tests): unit tests and real-device smoke test
-- [docs](f:/projects/triloDexPack/docs): release and publication notes
 
 ## Requirements
 
