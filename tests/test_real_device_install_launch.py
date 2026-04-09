@@ -18,8 +18,6 @@ from appium import webdriver
 from appium.options.android import UiAutomator2Options
 
 
-PACKAGE_NAME = "com.gotenna.proag"
-LAUNCH_ACTIVITY = "com.gotenna.proag.SplashActivity"
 FOREGROUND_STATE = 4
 SERVER_START_TIMEOUT = 30
 APP_LAUNCH_TIMEOUT = 90
@@ -33,6 +31,13 @@ def _env_enabled(name: str) -> bool:
 
 def _project_root() -> Path:
     return Path(__file__).resolve().parents[1]
+
+
+def _require_env(name: str) -> str:
+    value = os.getenv(name, "").strip()
+    if not value:
+        raise RuntimeError(f"Set {name} before running the real-device smoke test.")
+    return value
 
 
 def _resolve_apk() -> Path:
@@ -165,9 +170,10 @@ def _device_info(serial: str) -> dict[str, str]:
 
 
 def _ensure_package_removed(serial: str) -> None:
-    listed = _adb(serial, "shell", "pm", "list", "packages", PACKAGE_NAME).stdout
-    if f"package:{PACKAGE_NAME}" in listed:
-        _adb(serial, "uninstall", PACKAGE_NAME)
+    package_name = _require_env("TRILODEX_TEST_PACKAGE")
+    listed = _adb(serial, "shell", "pm", "list", "packages", package_name).stdout
+    if f"package:{package_name}" in listed:
+        _adb(serial, "uninstall", package_name)
 
 
 def _install_apk(serial: str, apk_path: Path) -> None:
@@ -245,16 +251,17 @@ def _appium_server():
 
 
 def _wait_for_foreground(driver: webdriver.Remote) -> dict[str, int | str]:
+    package_name = _require_env("TRILODEX_TEST_PACKAGE")
     deadline = time.time() + APP_LAUNCH_TIMEOUT
     last_state = -1
     last_package = ""
     last_activity = ""
 
     while time.time() < deadline:
-        last_state = driver.query_app_state(PACKAGE_NAME)
+        last_state = driver.query_app_state(package_name)
         last_package = driver.current_package
         last_activity = driver.current_activity
-        if last_state == FOREGROUND_STATE and last_package == PACKAGE_NAME:
+        if last_state == FOREGROUND_STATE and last_package == package_name:
             return {
                 "app_state": last_state,
                 "current_package": last_package,
@@ -272,6 +279,8 @@ def run_install_launch_smoke() -> dict[str, str | int]:
     apk_path = _resolve_apk()
     serial = _resolve_serial()
     device = _device_info(serial)
+    package_name = _require_env("TRILODEX_TEST_PACKAGE")
+    launch_activity = _require_env("TRILODEX_TEST_ACTIVITY")
 
     _ensure_package_removed(serial)
     _install_apk(serial, apk_path)
@@ -282,8 +291,8 @@ def run_install_launch_smoke() -> dict[str, str | int]:
             "automationName": "UiAutomator2",
             "deviceName": serial,
             "udid": serial,
-            "appPackage": PACKAGE_NAME,
-            "appActivity": LAUNCH_ACTIVITY,
+            "appPackage": package_name,
+            "appActivity": launch_activity,
             "autoGrantPermissions": True,
             "adbExecTimeout": 120000,
             "androidInstallTimeout": 180000,
@@ -297,12 +306,14 @@ def run_install_launch_smoke() -> dict[str, str | int]:
         driver = webdriver.Remote(server_url, options=options)
         try:
             foreground = _wait_for_foreground(driver)
-            installed = _adb(serial, "shell", "pm", "list", "packages", PACKAGE_NAME).stdout
-            if f"package:{PACKAGE_NAME}" not in installed:
-                raise AssertionError(f"Package was not installed: {PACKAGE_NAME}")
+            installed = _adb(serial, "shell", "pm", "list", "packages", package_name).stdout
+            if f"package:{package_name}" not in installed:
+                raise AssertionError(f"Package was not installed: {package_name}")
 
             return {
                 "apk": str(apk_path),
+                "package_name": package_name,
+                "launch_activity": launch_activity,
                 "serial": device["serial"],
                 "model": device["model"],
                 "android_version": device["android_version"],
@@ -321,7 +332,7 @@ def run_install_launch_smoke() -> dict[str, str | int]:
 )
 def test_can_install_and_launch_protected_apk():
     result = run_install_launch_smoke()
-    assert result["current_package"] == PACKAGE_NAME
+    assert result["current_package"] == _require_env("TRILODEX_TEST_PACKAGE")
     assert result["app_state"] == FOREGROUND_STATE
 
 

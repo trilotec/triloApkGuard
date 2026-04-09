@@ -70,7 +70,7 @@ The community edition should remain usable on its own. Commercial work should ex
 - [stub](f:/projects/triloDexPack/stub): injected smali runtime stub
 - [native](f:/projects/triloDexPack/native): native code generation inputs
 - [tests](f:/projects/triloDexPack/tests): unit tests and real-device smoke test
-- [docs](f:/projects/triloDexPack/docs): design notes and implementation documents
+- [docs](f:/projects/triloDexPack/docs): release and publication notes
 
 ## Requirements
 
@@ -119,6 +119,8 @@ Run the real-device install-and-launch smoke test:
 ```powershell
 $env:TRILODEX_REAL_DEVICE='1'
 $env:TRILODEX_TEST_APK='F:\projects\triloDexPack\output\protected.apk'
+$env:TRILODEX_TEST_PACKAGE='com.example.app'
+$env:TRILODEX_TEST_ACTIVITY='com.example.app.MainActivity'
 python -m pytest tests\test_real_device_install_launch.py -q -s
 ```
 
@@ -128,6 +130,9 @@ The real-device test:
 - starts an Appium `uiautomator2` session
 - launches the target app
 - verifies that the app reaches the foreground
+
+The real-device smoke test does not ship with a hard-coded third-party package name. Set
+`TRILODEX_TEST_PACKAGE` and `TRILODEX_TEST_ACTIVITY` for the APK under test.
 
 See [tests/test_real_device_install_launch.py](f:/projects/triloDexPack/tests/test_real_device_install_launch.py).
 
