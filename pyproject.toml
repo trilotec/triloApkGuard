@@ -1,0 +1,48 @@
+[project]
+name = "trilo-apk-guard"
+version = "0.1.0"
+description = "Android APK protection core with DEX encryption, native-assisted runtime loading, and real-device validation"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [
+    { name = "TriloApkGuard Maintainers" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Security",
+    "Topic :: Software Development :: Build Tools",
+]
+dependencies = [
+    "click>=8.1",
+    "cryptography>=41.0",
+    "androguard>=4.0",
+]
+
+[project.scripts]
+triloapkguard = "trilo_dex.cli:main"
+trilodex = "trilo_dex.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-mock",
+    "Appium-Python-Client>=4.5",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "real_device: requires a connected Android device, Appium, and an installable APK",
+]
+
+[tool.setuptools.packages.find]
+include = ["trilo_dex*"]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"

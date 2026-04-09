@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual env
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TriloDex
+*.keystore
+debug.keystore
+*.protected.apk
+*.apk
+*.idsig
+.pytest_cache/
+output/
+samples/
