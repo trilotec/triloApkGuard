@@ -17,8 +17,8 @@ Contributions should not expand the public branch into a dump of future commerci
 
 ## Before Opening A Change
 
-- Read [README.md](f:/projects/triloDexPack/README.md)
-- Read [DISCLAIMER.md](f:/projects/triloDexPack/DISCLAIMER.md)
+- Read [README.md](README.md)
+- Read [DISCLAIMER.md](DISCLAIMER.md)
 - Keep the community/private boundary intact
 
 In particular:
@@ -52,7 +52,9 @@ Real-device testing is opt-in and requires Android tooling, a connected device, 
 
 ```powershell
 $env:TRILODEX_REAL_DEVICE='1'
-$env:TRILODEX_TEST_APK='F:\projects\triloDexPack\output\protected.apk'
+$env:TRILODEX_TEST_APK='output\protected.apk'
+$env:TRILODEX_TEST_PACKAGE='com.example.app'
+$env:TRILODEX_TEST_ACTIVITY='com.example.app.MainActivity'
 python -m pytest tests\test_real_device_install_launch.py -q -s
 ```
 

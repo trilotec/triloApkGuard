@@ -6,9 +6,9 @@ It takes an input APK, encrypts its DEX payloads, injects a runtime stub, rebuil
 
 See also:
 
-- [DISCLAIMER.md](f:/projects/triloDexPack/DISCLAIMER.md)
-- [CONTRIBUTING.md](f:/projects/triloDexPack/CONTRIBUTING.md)
-- [SECURITY.md](f:/projects/triloDexPack/SECURITY.md)
+- [DISCLAIMER.md](DISCLAIMER.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [SECURITY.md](SECURITY.md)
 
 ## What It Does
 
@@ -64,11 +64,11 @@ The community edition should remain usable on its own. Commercial work should ex
 
 ## Repository Layout
 
-- [trilo_dex](f:/projects/triloDexPack/trilo_dex): core Python implementation
-- [trilo_dex/key_management.py](f:/projects/triloDexPack/trilo_dex/key_management.py): public key-management interface and community implementation
-- [stub](f:/projects/triloDexPack/stub): injected smali runtime stub
-- [native](f:/projects/triloDexPack/native): native code generation inputs
-- [tests](f:/projects/triloDexPack/tests): unit tests and real-device smoke test
+- [trilo_dex](trilo_dex): core Python implementation
+- [trilo_dex/key_management.py](trilo_dex/key_management.py): public key-management interface and community implementation
+- [stub](stub): injected smali runtime stub
+- [native](native): native code generation inputs
+- [tests](tests): unit tests and real-device smoke test
 
 ## Requirements
 
@@ -80,7 +80,7 @@ The community edition should remain usable on its own. Commercial work should ex
 - `adb` for device validation
 - Appium + `uiautomator2` driver for the real-device smoke test
 
-Python dependencies are defined in [pyproject.toml](f:/projects/triloDexPack/pyproject.toml).
+Python dependencies are defined in [pyproject.toml](pyproject.toml).
 
 The code package remains `trilo_dex` for now, while the public project name is `TriloApkGuard`.
 
@@ -95,13 +95,13 @@ pip install -e .
 Protect an APK:
 
 ```powershell
-python -m trilo_dex.cli input.apk -o output\protected.apk --sdk-dir D:\AndroidSdk -v
+python -m trilo_dex.cli input.apk -o output\protected.apk --sdk-dir <path-to-android-sdk> -v
 ```
 
 Or use the CLI entry point:
 
 ```powershell
-triloapkguard input.apk -o output\protected.apk --sdk-dir D:\AndroidSdk -v
+triloapkguard input.apk -o output\protected.apk --sdk-dir <path-to-android-sdk> -v
 ```
 
 ## Real-Device Validation
@@ -116,7 +116,7 @@ Run the real-device install-and-launch smoke test:
 
 ```powershell
 $env:TRILODEX_REAL_DEVICE='1'
-$env:TRILODEX_TEST_APK='F:\projects\triloDexPack\output\protected.apk'
+$env:TRILODEX_TEST_APK='output\protected.apk'
 $env:TRILODEX_TEST_PACKAGE='com.example.app'
 $env:TRILODEX_TEST_ACTIVITY='com.example.app.MainActivity'
 python -m pytest tests\test_real_device_install_launch.py -q -s
@@ -132,7 +132,7 @@ The real-device test:
 The real-device smoke test does not ship with a hard-coded third-party package name. Set
 `TRILODEX_TEST_PACKAGE` and `TRILODEX_TEST_ACTIVITY` for the APK under test.
 
-See [tests/test_real_device_install_launch.py](f:/projects/triloDexPack/tests/test_real_device_install_launch.py).
+See [tests/test_real_device_install_launch.py](tests/test_real_device_install_launch.py).
 
 ## Design Notes
 
@@ -171,7 +171,7 @@ The repository intentionally exposes a public key-management interface while kee
 - Do not commit third-party APK samples, signed outputs, or private signing assets into a public repository.
 - Protection features always have compatibility risk across apps, ROMs, Android versions, and vendor customizations.
 - The open-source version should be treated as a practical core, not as a guarantee of universal compatibility or absolute resistance to reverse engineering.
-- See [DISCLAIMER.md](f:/projects/triloDexPack/DISCLAIMER.md) for the intended public boundary of the repository.
+- See [DISCLAIMER.md](DISCLAIMER.md) for the intended public boundary of the repository.
 
 ## Status
 
