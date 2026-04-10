@@ -5,10 +5,8 @@ Generates libtrilocfg.so with 8-layer obfuscation for Derive-B key storage.
 
 import os
 import secrets
-import struct
 import subprocess
 import tempfile
-from pathlib import Path
 
 
 # ─── String encryption table ─────────────────────────────────────────
@@ -35,8 +33,8 @@ REQUIRED_STRINGS = [
 
 
 def _xor_encrypt(text: str, key: int) -> list[int]:
-    """XOR encrypt a string, return byte list with null terminator."""
-    return [(b ^ key) & 0xFF for b in text.encode("ascii")] + [0]
+    """XOR encrypt a string and return the encrypted bytes."""
+    return [(b ^ key) & 0xFF for b in text.encode("ascii")]
 
 
 def _generate_obfuscated_c(derive_b: bytes) -> str:
@@ -52,13 +50,16 @@ def _generate_obfuscated_c(derive_b: bytes) -> str:
     # ── Layer 1: String encryption ──
     string_key = secrets.randbelow(256)
     enc_strings = {}
+    string_vars = {}
     for i, s in enumerate(REQUIRED_STRINGS):
         var_name = f"_s{i:02d}"
         enc_strings[var_name] = {
             "data": _xor_encrypt(s, string_key),
             "key": string_key,
             "var": var_name,
+            "length": len(s),
         }
+        string_vars[s] = var_name
 
     # ── Layer 3: Key fragmentation (16 bytes → 16 single-byte fragments) ──
     # Split into 16 bytes, each with different obfuscation
@@ -113,10 +114,12 @@ def _generate_obfuscated_c(derive_b: bytes) -> str:
     # ── Generate C source ──
     lines = []
     lines.append("#include <stdint.h>")
+    lines.append("#include <stdio.h>")
     lines.append("#include <string.h>")
     lines.append("#include <stdlib.h>")
     lines.append("#include <time.h>")
     lines.append("#include <unistd.h>")
+    lines.append("#include <sys/syscall.h>")
     lines.append("#include <jni.h>")
     lines.append("")
     # JNI macros
@@ -146,8 +149,9 @@ def _generate_obfuscated_c(derive_b: bytes) -> str:
     lines.append("")
 
     # ── Helper: string decryption ──
-    lines.append("static void _dec_str(char *out, const uint8_t *enc, int key) {")
-    lines.append("    for (int i = 0; enc[i]; i++) out[i] = enc[i] ^ key;")
+    lines.append("static void _dec_str(char *out, const uint8_t *enc, size_t len, int key) {")
+    lines.append("    for (size_t i = 0; i < len; i++) out[i] = (char)(enc[i] ^ key);")
+    lines.append("    out[len] = '\\0';")
     lines.append("}")
     lines.append("")
 
@@ -162,24 +166,35 @@ def _generate_obfuscated_c(derive_b: bytes) -> str:
     lines.append("/* Layer 5: Anti-debug */")
     lines.append("static int _check_debug(void) {")
     lines.append("    char path[64];")
-    lines.append("    _dec_str(path, _s04, _str_key);  /* \"/proc/self/status\" */")
+    lines.append("    char tracer[32];")
+    lines.append(
+        f"    _dec_str(path, {string_vars['/proc/self/status']}, "
+        f"sizeof({string_vars['/proc/self/status']}), _str_key);"
+    )
 
     # TracerPid check
     lines.append("    FILE *fp = fopen(path, \"r\");")
     lines.append("    if (fp) {")
     lines.append("        char line[256];")
-    lines.append("        _dec_str(path, _s05, _str_key);  /* \"TracerPid:\" */")
-    lines.append("        int tlen = strlen(path);")
+    lines.append(
+        f"        _dec_str(tracer, {string_vars['TracerPid:']}, "
+        f"sizeof({string_vars['TracerPid:']}), _str_key);"
+    )
+    lines.append("        int tlen = strlen(tracer);")
     lines.append("        while (fgets(line, sizeof(line), fp)) {")
-    lines.append("            if (strncmp(line, path, tlen) == 0) {")
+    lines.append("            if (strncmp(line, tracer, tlen) == 0) {")
     lines.append("                int pid = atoi(line + tlen);")
     lines.append("                fclose(fp);")
     lines.append("                _wipe(line, sizeof(line));")
+    lines.append("                _wipe(tracer, sizeof(tracer));")
+    lines.append("                _wipe(path, sizeof(path));")
     lines.append("                if (pid != 0) return 1;")
     lines.append("            }")
     lines.append("        }")
     lines.append("        fclose(fp);")
     lines.append("    }")
+    lines.append("    _wipe(tracer, sizeof(tracer));")
+    lines.append("    _wipe(path, sizeof(path));")
 
     # ptrace check (syscall directly to avoid symbol)
     lines.append("    long ret = syscall(101, 0, 0, 0, 0);  /* PTRACE_TRACEME */")
@@ -254,7 +269,7 @@ def _generate_obfuscated_c(derive_b: bytes) -> str:
     lines.append(f"static int {opaque_func}(void) {{")
     lines.append("    volatile unsigned int x = 0x9E3779B9U;")
     lines.append("    x ^= x << 13; x ^= x >> 17; x ^= x << 5;")
-    lines.append("    return (int)(x & 1);")
+    lines.append("    return (int)(((x * (x - 1U)) & 1U) == 0U);")
     lines.append("}")
     lines.append("")
 
@@ -289,9 +304,9 @@ def _generate_obfuscated_c(derive_b: bytes) -> str:
 
     # State 400: Reassemble key fragments (in shuffled order)
     lines.append("            case 400:")
-    for i, idx in enumerate(permutation):
+    for idx in permutation:
         frag = fragments[idx]
-        lines.append(f"                key[{i}] = {frag['recover']};")
+        lines.append(f"                key[{idx}] = {frag['recover']};")
     lines.append("                state = 500; break;")
 
     # State 500: Checksum validation
